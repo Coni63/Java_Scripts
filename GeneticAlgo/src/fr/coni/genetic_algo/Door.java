@@ -13,7 +13,7 @@ public class Door {
 		this.width = random.nextInt(50) + 100;
 		this.center = random.nextInt(screen_height-this.width) + this.width/2;
 		this.x = x + random.nextInt(50);
-		System.out.println("Door of " + this.width + " px at height " + this.center + " | x = " + this.x);
+		//System.out.println("Door of " + this.width + " px at height " + this.center + " | x = " + this.x);
 	}
 	
 }

@@ -1,5 +1,7 @@
 package fr.coni.genetic_algo;
 
+import java.awt.geom.Point2D;
+
 import processing.core.PApplet;
 
 public class Map {

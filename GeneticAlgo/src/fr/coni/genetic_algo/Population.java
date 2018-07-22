@@ -19,18 +19,18 @@ public class Population {
 		this.selection_rate = selection_rate;
 		this.population = new Candidate[this.population_size];
 		for (int i=0 ; i<this.population_size ;i++) {
-			this.population[i] = new Candidate();
+			this.population[i] = new Candidate(p.frameRate);
 		}
 	}
 	
-	public int[] getRange() {
-		int min_x = 0;
-		int max_x = 0;
+	public float[] getRange() {
+		float min_x = 0;
+		float max_x = 0;
 		for (Candidate c : this.population) {
 			min_x = Math.min(min_x, c.getX()); 
 			max_x = Math.max(max_x, c.getX()); 
 		}
-		int[] A =  {min_x, max_x};
+		float[] A =  {min_x, max_x};
 		return A;
 	}
 	
@@ -43,14 +43,11 @@ public class Population {
 	public void draw() {
 		parent.rectMode(PApplet.CENTER);
 		parent.fill(128, 50);
-		for (Candidate c : this.population) {	
-			parent.translate(c.getX(), c.getY());
-			parent.rotate(c.getAngle());
-			parent.rect(0, 0, c.getWidth(), c.getThickness());
-			parent.rotate(-c.getAngle());
-			parent.translate(-c.getX(), -c.getY());
+		for (Candidate c : this.population) {
+			c.draw(parent);
 		}
-	}
+		this.population[0].displayHUD(parent);
+	};
 
 
 }

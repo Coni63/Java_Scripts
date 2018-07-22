@@ -20,22 +20,23 @@ public class Main extends PApplet{
 	
 	private Map map;
 	private Population population;
-	int temp = 0;
+	public int temp = 0;
+	public int FrameRate = 15;
 		
 	public static void main(String[] args) {
 		PApplet.main("fr.coni.genetic_algo.Main");
 	}
 
 	public void settings(){
-	    size(800, 800);
+	    size(1500, 800);
 	}
 
 
 	public void setup() {
-		frameRate(15);
+		frameRate(FrameRate);
 		rectMode(CORNERS);
 		map = new Map(this, 42);
-		population = new Population(this, 10, 0.5f, 0.1f, 0.05f);
+		population = new Population(this, 2, 0.5f, 0.1f, 0.05f);
 		
 		map.generate();
 	}
@@ -48,11 +49,11 @@ public class Main extends PApplet{
 		population.step();
 		population.draw();
 		
-		temp += 10;
-		
-		if (frameCount > 100) {
+		if (frameCount > 1000) {
 			noLoop();
 		}
+		
+		//saveFrame("F:/java_rendering/output/img_#####.png");
 	}
 	
 }

@@ -1,46 +1,128 @@
 package fr.coni.genetic_algo;
 
+import java.awt.geom.Point2D;
 import java.util.Random;
+import processing.core.PVector;
+import processing.core.PApplet;
 
 public class Candidate {
 	
 	private float speed;
-	private int x;
-	private int y;
-	private float thrust; // thrust max for both engines
+	private float x;
+	private float y;
+	private PVector v;
+	private PVector a;
 	private float angle;
+	private float omega;
+	private float omega_dot;
+	private float thrust; // thrust max for both engines
 	private float weight;
 	private float friction;
+	private float air_friction;
+	private float air_friction_force;
+	private float friction_force;
 	private float b;
 	private float h;
 	private float I;
+	private float timelapse;                        
+	private float density = 7800;                     			// kg/m^3
+	public int score;
+	public boolean is_active;
+	public Point2D[] corners;
 	
-	Candidate(){
-		this.speed = 0f;
-		this.x = 0;
-		this.y = 400;
-		this.thrust = 100f;
-		this.angle = 0f;
-		this.weight = 100f;
-		this.friction = 100f;
-		this.b = 30f;
-		this.h = 3f;
-		this.I = setInertia();
+	Candidate(float fps){
+		this.speed = 0f;                              			// m/s
+		this.x = 0;                                   			// m
+		this.y = 400;                                 			// m
+		this.v = new PVector(0, 0);                   			// m/s
+		this.a = new PVector(0, 0);                   			// m/s²
+		this.angle = 0;             							// rad
+		this.omega = 0f;                              			// rad/s
+		this.omega_dot = 0f;                          			// rad/s²
+		this.thrust = 1500f; 									// N
+		this.b = 3f;                                  			// m
+		this.h = 0.3f;                                			// m
+		this.weight = this.b * this.h * this.h * this.density; 	// kg
+		this.friction = 0.3f; 						           	// coef steel/steel
+		this.friction_force = this.friction * this.weight;      // N
+		this.air_friction = 2.42f * 1.225f * this.b * this.h;   // Cx * rho *S
+		this.I = setInertia();                        			// m^4
+		timelapse = (float) (1/fps);                  			// s
+		this.corners = new Point2D[4];
+		this.is_active = true;
 	}
 	
-	public int getX() {
+	public float getX() {
 		return this.x;
 	}
 	
-	public int getY() {
+	public float getY() {
 		return this.y;
 	}
 	
 	public void move() {
 		Random random = new Random();
-		this.x += random.nextInt(10);
-		this.y += random.nextInt(10)-5;
-		this.angle = (float) (( random.nextFloat() - 0.5 ) * Math.PI);
+		float b1 = 0.99f;
+		float b2 = 1f;
+		
+		this.air_friction_force = this.air_friction * (float)Math.pow(this.speed, 2);
+		
+		float norm = ( this.thrust * (b1 + b2) - this.air_friction_force - this.friction_force ) / this.weight;
+
+		PVector acc_vector = PVector.fromAngle(this.angle);
+		this.a = acc_vector.mult( norm );
+		this.v.add(acc_vector.mult( timelapse ));
+		this.speed = this.v.mag();
+		
+		this.x += this.v.x * timelapse;
+		this.y += this.v.y * timelapse;
+
+		this.omega_dot = this.I * (this.h / 2) * this.thrust * (b2-b1) ;
+		this.omega += omega_dot * timelapse;
+		this.angle = (float)((this.angle + this.omega * timelapse) % (2 * Math.PI));
+		
+		setCorner();
+	}
+	
+	public void setCorner() {
+		this.corners[0] = new Point2D.Double(this.x + this.b/2 * Math.sin(this.angle) + this.h/2 * Math.cos(this.angle), 
+											 this.y - this.b/2 * Math.cos(this.angle) + this.h/2 * Math.sin(this.angle));
+		this.corners[1] = new Point2D.Double(this.x + this.b/2 * Math.sin(this.angle) - this.h/2 * Math.cos(this.angle), 
+				 							 this.y - this.b/2 * Math.cos(this.angle) - this.h/2 * Math.sin(this.angle));
+		this.corners[2] = new Point2D.Double(this.x - this.b/2 * Math.sin(this.angle) - this.h/2 * Math.cos(this.angle), 
+			 								 this.y + this.b/2 * Math.cos(this.angle) - this.h/2 * Math.sin(this.angle));
+		this.corners[3] = new Point2D.Double(this.x - this.b/2 * Math.sin(this.angle) + this.h/2 * Math.cos(this.angle), 
+				 							 this.y + this.b/2 * Math.cos(this.angle) + this.h/2 * Math.sin(this.angle));
+	}
+	
+	public void displayHUD(PApplet parent) {
+		parent.rectMode(PApplet.CORNER);
+		parent.fill(255, 255, 255);
+		parent.rect(0, 0, 180, 60);
+		parent.textSize(10);
+		parent.fill(0, 0, 0);
+		parent.text("Position : (" + String.format("%.02f", this.x) + ", " + String.format("%.02f", this.y) + ")", 10, 10);
+		parent.text("Speed : " + String.format("%.02f", this.speed) + " m/s (" + String.format("%.02f", this.speed * 3.6) + " km/h)" , 10, 20);
+		parent.text("Acc : " + String.format("%.02f", this.a.mag()) , 10, 30);
+		parent.text("Angle : " + String.format("%.02f", this.angle * 180 / Math.PI) , 10, 40);
+		parent.text("Friction : " + String.format("%.02f", this.air_friction_force + this.friction_force) , 10, 50);
+		//parent.text("Angle : " + String.format("%.02f", this.angle * 180 / Math.PI) , 10, 60);
+		//parent.text("Angle : " + String.format("%.02f", this.angle * 180 / Math.PI) , 10, 70);
+	}
+	
+	public void draw(PApplet parent) {
+		parent.translate(this.x, this.y);
+		parent.rotate(this.angle);
+		parent.rect(0, 0, this.h, this.b);
+		parent.rotate(-this.angle);
+		parent.translate(-this.x, -this.y);
+		
+		
+		parent.ellipse((float)this.corners[0].getX(), (float)this.corners[0].getY(), 5f, 5f);
+		parent.ellipse((float)this.corners[1].getX(), (float)this.corners[1].getY(), 5f, 5f);
+		parent.ellipse((float)this.corners[2].getX(), (float)this.corners[2].getY(), 5f, 5f);
+		parent.ellipse((float)this.corners[3].getX(), (float)this.corners[3].getY(), 5f, 5f);
+		
 	}
 
 	public float getThrust() {
@@ -76,7 +158,7 @@ public class Candidate {
 	}
 
 	public float getWidth() {
-		return this.b;
+		return this.b*10;
 	}
 
 	public void setWidth(float width) {
@@ -85,7 +167,7 @@ public class Candidate {
 	}
 	
 	public float getThickness() {
-		return this.h;
+		return this.h*10;
 	}
 	
 	private float setInertia() {
