@@ -5,10 +5,9 @@ import java.awt.geom.Point2D;
 import processing.core.PApplet;
 
 public class Map {
-	
-	private int WT  = 10;
+
 	private PApplet parent;
-	private Door[] doors;
+	public Door[] doors;
 	
 	Map(PApplet p, int seed){
 		parent = p;	
@@ -25,11 +24,7 @@ public class Map {
 		parent.rectMode(PApplet.CORNERS);
 		parent.fill(0);
 		for (Door d : doors) {
-			if ( (d.x > position_mini) & (d.x < position_mini + parent.width) ) {
-				parent.rect(d.x - position_mini, d.center - (d.width / 2), d.x - position_mini + WT, 0);
-				parent.rect(d.x - position_mini, d.center + (d.width / 2), d.x - position_mini + WT, parent.height);
-			}
+			d.draw(parent, position_mini);
 		}
 	}
-	
 }

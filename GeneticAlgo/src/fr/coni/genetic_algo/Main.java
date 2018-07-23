@@ -20,7 +20,6 @@ public class Main extends PApplet{
 	
 	private Map map;
 	private Population population;
-	public int temp = 0;
 	public int FrameRate = 15;
 		
 	public static void main(String[] args) {
@@ -36,17 +35,21 @@ public class Main extends PApplet{
 		frameRate(FrameRate);
 		rectMode(CORNERS);
 		map = new Map(this, 42);
-		population = new Population(this, 2, 0.5f, 0.1f, 0.05f);
+		population = new Population(this, 1, 0.5f, 0.1f, 0.05f, map);
 		
 		map.generate();
 	}
 
 	public void draw() {
-		background(255);
-		
-		map.draw(temp);
-		
+
+		//long startTime = System.nanoTime();
 		population.step();
+		//long endTime = System.nanoTime();
+		//long duration = (endTime - startTime); 
+		//System.out.println(duration/1000);
+		
+		background(255);
+		map.draw(0);
 		population.draw();
 		
 		if (frameCount > 1000) {

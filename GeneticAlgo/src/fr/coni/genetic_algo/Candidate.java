@@ -29,8 +29,12 @@ public class Candidate {
 	public int score;
 	public boolean is_active;
 	public Point2D[] corners;
+	private int current_door;
+	private Map map;
+	private float AngleToTarget;
+	private IA ia;
 	
-	Candidate(float fps){
+	Candidate(float fps, Map map){
 		this.speed = 0f;                              			// m/s
 		this.x = 0;                                   			// m
 		this.y = 400;                                 			// m
@@ -50,6 +54,10 @@ public class Candidate {
 		timelapse = (float) (1/fps);                  			// s
 		this.corners = new Point2D[4];
 		this.is_active = true;
+		this.map = map;
+		this.current_door = 0;
+		this.AngleToTarget = 0;
+		this.ia = new IA();
 	}
 	
 	public float getX() {
@@ -60,10 +68,10 @@ public class Candidate {
 		return this.y;
 	}
 	
-	public void move() {
-		Random random = new Random();
-		float b1 = 0.99f;
-		float b2 = 1f;
+	public void move(float[] actions) {
+		
+		float b1 = actions[0];
+		float b2 = actions[1];
 		
 		this.air_friction_force = this.air_friction * (float)Math.pow(this.speed, 2);
 		
@@ -81,8 +89,34 @@ public class Candidate {
 		this.omega += omega_dot * timelapse;
 		this.angle = (float)((this.angle + this.omega * timelapse) % (2 * Math.PI));
 		
-		setCorner();
 	}
+	
+	public void UpdateTarget() {
+		
+		UpdateTargetNumber();
+		this.AngleToTarget = getTargetAngle();
+		
+	}
+	
+	public void UpdateTargetNumber() {
+		Door current_door = this.map.doors[this.current_door];
+		if (this.x > current_door.x) {
+			if ( (this.y < current_door.center - current_door.width/2) | (this.y > current_door.center + current_door.width/2) ) {
+				this.is_active = false;
+				System.out.println("Candidate is out");
+				this.current_door++;
+			} else {
+				this.current_door++;
+				System.out.println("Congratulation you just passed the door " + this.current_door );
+			}
+		}
+		
+	}
+	
+	public float[] getAction() {
+		return this.ia.predict();
+	}
+	
 	
 	public void setCorner() {
 		this.corners[0] = new Point2D.Double(this.x + this.b/2 * Math.sin(this.angle) + this.h/2 * Math.cos(this.angle), 
@@ -110,19 +144,28 @@ public class Candidate {
 		//parent.text("Angle : " + String.format("%.02f", this.angle * 180 / Math.PI) , 10, 70);
 	}
 	
-	public void draw(PApplet parent) {
+	public void draw(PApplet parent) {		
 		parent.translate(this.x, this.y);
 		parent.rotate(this.angle);
 		parent.rect(0, 0, this.h, this.b);
 		parent.rotate(-this.angle);
 		parent.translate(-this.x, -this.y);
 		
+		setCorner();
 		
 		parent.ellipse((float)this.corners[0].getX(), (float)this.corners[0].getY(), 5f, 5f);
 		parent.ellipse((float)this.corners[1].getX(), (float)this.corners[1].getY(), 5f, 5f);
 		parent.ellipse((float)this.corners[2].getX(), (float)this.corners[2].getY(), 5f, 5f);
 		parent.ellipse((float)this.corners[3].getX(), (float)this.corners[3].getY(), 5f, 5f);
 		
+	}
+	
+	public float getTargetAngle() {
+		PVector VectorToTarget;
+		VectorToTarget = new PVector((float)(this.map.doors[this.current_door].x) - this.x,
+									 (float)(this.map.doors[this.current_door].center) - this.y);
+		
+		return this.v.heading() - VectorToTarget.heading();
 	}
 
 	public float getThrust() {

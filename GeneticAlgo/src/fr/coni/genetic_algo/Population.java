@@ -11,7 +11,7 @@ public class Population {
 	private Candidate[] population;
 	private PApplet parent;
 	
-	Population(PApplet p, int population_size, float selection_rate, float crossover_rate, float mutation_rate ) {
+	Population(PApplet p, int population_size, float selection_rate, float crossover_rate, float mutation_rate, Map map ) {
 		parent = p;
 		this.population_size = population_size;
 		this.mutation_rate = mutation_rate;
@@ -19,7 +19,7 @@ public class Population {
 		this.selection_rate = selection_rate;
 		this.population = new Candidate[this.population_size];
 		for (int i=0 ; i<this.population_size ;i++) {
-			this.population[i] = new Candidate(p.frameRate);
+			this.population[i] = new Candidate(p.frameRate, map);
 		}
 	}
 	
@@ -35,8 +35,13 @@ public class Population {
 	}
 	
 	public void step() {
+		float[] actions = new float[2]; 
 		for (Candidate c : this.population) {
-			c.move();
+			
+			c.UpdateTarget();
+			actions = c.getAction();
+			c.move(actions);
+			c.UpdateTarget();
 		}
 	}
 	
