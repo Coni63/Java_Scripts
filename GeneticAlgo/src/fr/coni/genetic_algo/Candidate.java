@@ -1,171 +1,169 @@
 package fr.coni.genetic_algo;
 
-import java.awt.geom.Point2D;
-import java.util.Random;
+//import java.awt.geom.Point2D;
+// import java.util.Random;
 import processing.core.PVector;
-import processing.core.PApplet;
 
 public class Candidate {
 	
-	private float speed;
-	private float x;
-	private float y;
-	private PVector v;
-	private PVector a;
-	private float angle;
-	private float omega;
-	private float omega_dot;
-	private float thrust; // thrust max for both engines
-	private float weight;
-	private float friction;
-	private float air_friction;
-	private float air_friction_force;
-	private float friction_force;
-	private float b;
-	private float h;
-	private float I;
+	public PVector pos;
+	public PVector v;
+	public PVector a;
+	public PVector balance;
+	public int ID;
+	public float thrust; // thrust max for both engines
+	public float weight;
+	public float friction;
+	public float air_friction;
+	public float air_friction_force;
+	public float friction_force;
+	public float w, h, thk;
 	private float timelapse;                        
 	private float density = 7800;                     			// kg/m^3
-	public int score;
+	public float fitness;
 	public boolean is_active;
-	public Point2D[] corners;
-	private int current_door;
-	private Map map;
-	private float AngleToTarget;
+	public int current_door;
+	public Map map;
+	public float AngleToTarget;
+	public float v_max, px, py, ix, iy, dx, dy;
 	private IA ia;
+	private float[] genome = new float[7];
+	public int remaining_life;
+	public boolean best;
 	
-	Candidate(float fps, Map map){
-		this.speed = 0f;                              			// m/s
-		this.x = 0;                                   			// m
-		this.y = 400;                                 			// m
+	Candidate(int ID, float fps, Map map){
+		this.ID = ID;
+		this.pos =new PVector(0, (float)(map.h_max / 2));       // m
 		this.v = new PVector(0, 0);                   			// m/s
 		this.a = new PVector(0, 0);                   			// m/s²
-		this.angle = 0;             							// rad
-		this.omega = 0f;                              			// rad/s
-		this.omega_dot = 0f;                          			// rad/s²
-		this.thrust = 1500f; 									// N
-		this.b = 3f;                                  			// m
-		this.h = 0.3f;                                			// m
-		this.weight = this.b * this.h * this.h * this.density; 	// kg
+		this.balance = new  PVector(1f, 1f);
+		this.thrust = 15000f; 									// N
+		this.w = 3f;                                  			// m
+		this.h = 0.3f;                            				// m
+		this.thk = .1f;											// m
+		this.weight = this.w * this.h * this.thk * this.density; // kg
 		this.friction = 0.3f; 						           	// coef steel/steel
 		this.friction_force = this.friction * this.weight;      // N
-		this.air_friction = 2.42f * 1.225f * this.b * this.h;   // Cx * rho *S
-		this.I = setInertia();                        			// m^4
+		this.air_friction = 2.42f * 1.225f * this.w * this.h;   // Cx * rho *S                      			
 		timelapse = (float) (1/fps);                  			// s
-		this.corners = new Point2D[4];
 		this.is_active = true;
 		this.map = map;
 		this.current_door = 0;
 		this.AngleToTarget = 0;
-		this.ia = new IA();
+		this.fitness = 0;
+		this.remaining_life = 100;
+		this.best = false;
+		
+		this.v_max = (float)Math.random()*10;
+		this.px = (float)Math.random()*10;
+		this.py = (float)Math.random()*10;
+		this.ix = 0f;//(float)Math.random()*10;
+		this.iy = 0f;//(float)Math.random()*10;
+		this.dx = (float)Math.random()*10;
+		this.dy = (float)Math.random()*10;
+		
+		this.genome[0] = this.v_max;
+		this.genome[1] = this.px; 
+		this.genome[2] = this.py; 
+		this.genome[3] = this.ix; 
+		this.genome[4] = this.iy;
+		this.genome[5] = this.dx;;
+		this.genome[6] = this.dy;
+		
+		this.ia = new IA(this, this.genome);
+	}
+	
+	public float getFitness() {
+		return this.fitness;
 	}
 	
 	public float getX() {
-		return this.x;
+		return this.pos.x;
 	}
 	
 	public float getY() {
-		return this.y;
+		return this.pos.y;
 	}
 	
 	public void move(float[] actions) {
 		
-		float b1 = actions[0];
-		float b2 = actions[1];
+		this.balance = new  PVector(actions[0], actions[1]);
 		
-		this.air_friction_force = this.air_friction * (float)Math.pow(this.speed, 2);
+		this.air_friction_force = this.air_friction * this.v.magSq();
 		
-		float norm = ( this.thrust * (b1 + b2) - this.air_friction_force - this.friction_force ) / this.weight;
-
-		PVector acc_vector = PVector.fromAngle(this.angle);
-		this.a = acc_vector.mult( norm );
-		this.v.add(acc_vector.mult( timelapse ));
-		this.speed = this.v.mag();
+		PVector current_thrust = this.balance.copy();
+				current_thrust.mult(this.thrust);
+				
+		PVector current_friction = this.v.copy();
+				current_friction.normalize();
+				current_friction.mult(this.air_friction_force + this.friction_force);
+				
+		this.a = PVector.sub(current_thrust, current_friction).div(this.weight);
+		this.v = PVector.add( this.v, PVector.mult(this.a, timelapse) );
+		this.pos = PVector.add( this.pos, PVector.mult(this.v, timelapse) );
 		
-		this.x += this.v.x * timelapse;
-		this.y += this.v.y * timelapse;
-
-		this.omega_dot = this.I * (this.h / 2) * this.thrust * (b2-b1) ;
-		this.omega += omega_dot * timelapse;
-		this.angle = (float)((this.angle + this.omega * timelapse) % (2 * Math.PI));
+		if (this.pos.x < 0) {
+			this.a.x = 0;
+			this.v.x = 0;
+			this.pos.x = 0;
+		}
+		
+		if (this.pos.y - this.w/2 < 0) {
+			this.a.y = 0;
+			this.v.y = 0;
+			this.pos.y = this.w/2;
+		} else if (this.pos.y + this.w/2 > this.map.h_max) {
+			this.a.y = 0;
+			this.v.y = 0;
+			this.pos.y = this.map.h_max - this.w/2;
+		}
+		
+		this.remaining_life--;
 		
 	}
 	
 	public void UpdateTarget() {
-		
 		UpdateTargetNumber();
-		this.AngleToTarget = getTargetAngle();
+		//this.AngleToTarget = getTargetAngle();
 		
 	}
 	
 	public void UpdateTargetNumber() {
 		Door current_door = this.map.doors[this.current_door];
-		if (this.x > current_door.x) {
-			if ( (this.y < current_door.center - current_door.width/2) | (this.y > current_door.center + current_door.width/2) ) {
+		if (this.pos.x + this.h/2 > current_door.x) {
+			if ( (this.pos.y-this.w/2 < current_door.center - current_door.width/2) | (this.pos.y + this.w/2 > current_door.center + current_door.width/2) ) {
 				this.is_active = false;
-				System.out.println("Candidate is out");
-				this.current_door++;
+				this.fitness = (float)(this.pos.x / this.map.x_max);
+				//System.out.println("Candidate is out");
 			} else {
 				this.current_door++;
-				System.out.println("Congratulation you just passed the door " + this.current_door );
+				this.remaining_life += 100;
+				//System.out.println("Congratulation you just passed the door " + this.current_door );
+				if (this.current_door >= this.map.nb_doors) {
+					this.current_door--;
+					this.fitness = 1f;
+					this.is_active = false;
+				}
 			}
 		}
 		
+		if (this.remaining_life < 1) {
+			this.is_active = false;
+			this.fitness = (float)(this.pos.x / this.map.x_max);
+			//System.out.println("Candidate is out");
+		}
 	}
 	
 	public float[] getAction() {
 		return this.ia.predict();
 	}
-	
-	
-	public void setCorner() {
-		this.corners[0] = new Point2D.Double(this.x + this.b/2 * Math.sin(this.angle) + this.h/2 * Math.cos(this.angle), 
-											 this.y - this.b/2 * Math.cos(this.angle) + this.h/2 * Math.sin(this.angle));
-		this.corners[1] = new Point2D.Double(this.x + this.b/2 * Math.sin(this.angle) - this.h/2 * Math.cos(this.angle), 
-				 							 this.y - this.b/2 * Math.cos(this.angle) - this.h/2 * Math.sin(this.angle));
-		this.corners[2] = new Point2D.Double(this.x - this.b/2 * Math.sin(this.angle) - this.h/2 * Math.cos(this.angle), 
-			 								 this.y + this.b/2 * Math.cos(this.angle) - this.h/2 * Math.sin(this.angle));
-		this.corners[3] = new Point2D.Double(this.x - this.b/2 * Math.sin(this.angle) + this.h/2 * Math.cos(this.angle), 
-				 							 this.y + this.b/2 * Math.cos(this.angle) + this.h/2 * Math.sin(this.angle));
-	}
-	
-	public void displayHUD(PApplet parent) {
-		parent.rectMode(PApplet.CORNER);
-		parent.fill(255, 255, 255);
-		parent.rect(0, 0, 180, 60);
-		parent.textSize(10);
-		parent.fill(0, 0, 0);
-		parent.text("Position : (" + String.format("%.02f", this.x) + ", " + String.format("%.02f", this.y) + ")", 10, 10);
-		parent.text("Speed : " + String.format("%.02f", this.speed) + " m/s (" + String.format("%.02f", this.speed * 3.6) + " km/h)" , 10, 20);
-		parent.text("Acc : " + String.format("%.02f", this.a.mag()) , 10, 30);
-		parent.text("Angle : " + String.format("%.02f", this.angle * 180 / Math.PI) , 10, 40);
-		parent.text("Friction : " + String.format("%.02f", this.air_friction_force + this.friction_force) , 10, 50);
-		//parent.text("Angle : " + String.format("%.02f", this.angle * 180 / Math.PI) , 10, 60);
-		//parent.text("Angle : " + String.format("%.02f", this.angle * 180 / Math.PI) , 10, 70);
-	}
-	
-	public void draw(PApplet parent) {		
-		parent.translate(this.x, this.y);
-		parent.rotate(this.angle);
-		parent.rect(0, 0, this.h, this.b);
-		parent.rotate(-this.angle);
-		parent.translate(-this.x, -this.y);
-		
-		setCorner();
-		
-		parent.ellipse((float)this.corners[0].getX(), (float)this.corners[0].getY(), 5f, 5f);
-		parent.ellipse((float)this.corners[1].getX(), (float)this.corners[1].getY(), 5f, 5f);
-		parent.ellipse((float)this.corners[2].getX(), (float)this.corners[2].getY(), 5f, 5f);
-		parent.ellipse((float)this.corners[3].getX(), (float)this.corners[3].getY(), 5f, 5f);
-		
-	}
-	
+			
 	public float getTargetAngle() {
 		PVector VectorToTarget;
-		VectorToTarget = new PVector((float)(this.map.doors[this.current_door].x) - this.x,
-									 (float)(this.map.doors[this.current_door].center) - this.y);
-		
-		return this.v.heading() - VectorToTarget.heading();
+		VectorToTarget = new PVector((float)(this.map.doors[this.current_door].x) - this.pos.x,
+									 (float)(this.map.doors[this.current_door].center) - this.pos.y);
+		//System.out.println(VectorToTarget.heading());
+		return VectorToTarget.heading();
 	}
 
 	public float getThrust() {
@@ -174,14 +172,6 @@ public class Candidate {
 
 	public void setThrust(float thrust) {
 		this.thrust = thrust;
-	}
-
-	public float getAngle() {
-		return this.angle;
-	}
-
-	public void setAngle(float angle) {
-		this.angle = angle;
 	}
 
 	public float getWeight() {
@@ -201,21 +191,37 @@ public class Candidate {
 	}
 
 	public float getWidth() {
-		return this.b*10;
+		return this.w;
 	}
 
 	public void setWidth(float width) {
-		this.b = width;
-		setInertia();
+		this.w = width;
 	}
 	
 	public float getThickness() {
-		return this.h*10;
+		return this.thk;
 	}
 	
-	private float setInertia() {
-		return (float)( this.b * Math.pow(this.h, 3) )/12;
+	public void setGenome(float[] genome) {
+		this.genome = genome;
 	}
 	
+	public float[] getGenome() {
+		return this.genome;
+	}
+	
+	public void reset() {
+		this.pos =new PVector(0, (float)(map.h_max / 2));       // m
+		this.v = new PVector(0, 0);                   			// m/s
+		this.a = new PVector(0, 0);
+		this.current_door = 0;
+		this.fitness = 0;
+		this.best = false;
+		this.is_active = true;
+		//this.ia = new IA(this, this.genome);
+		this.ia.sum_error_x = 0;
+		this.ia.sum_error_y = 0;
+		this.ia.prev_error = new PVector(0, 0);
+	}
 	
 }
