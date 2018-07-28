@@ -57,6 +57,12 @@ public class Main extends PApplet{
 				rect(to_pixel_x(d.x), to_pixel_y(d.center + (d.width / 2)), to_pixel_x(d.x + WT), to_pixel_y(hmax));
 			}
 			
+			// draw trajectory
+			fill(0, 0, 0);
+			for (int i = 0; i<map.x.length; i++) {
+				ellipse(to_pixel_x(map.x[i]), to_pixel_y(map.y[i]), 1, 1);
+			}
+			
 			// draw candidates
 			rectMode(PApplet.CENTER);
 			fill(128, 50);

@@ -85,7 +85,7 @@ public class Population {
 	public void select() {
 		Random random = new Random();
 		for (int i = this.population.size()-4 ; i>=0 ; i--) {
-			if ( random.nextFloat() > this.population.get(i).fitness ) {
+			if ( random.nextFloat() > this.selection_rate) { //this.population.get(i).fitness ) {
 				this.population.remove(i);
 			}			
 		}
@@ -111,6 +111,7 @@ public class Population {
 					temp2.setGenome(gen_b);
 					this.population.add( temp1 );
 					this.population.add( temp2 );
+					this.current_ID +=2 ;
 				}
 			}
 		}
@@ -118,14 +119,20 @@ public class Population {
 
 	public void mutate() {
 		Random random = new Random();
+		
 		for (Candidate c : this.population) {
 			if (random.nextFloat() < this.mutation_rate) {
 				float[] gen_a = c.getGenome();
 				int idx = random.nextInt(gen_a.length);
-				gen_a[idx] = (float)Math.random()*10+1;
-				c.setGenome(gen_a); 
+				gen_a[idx] *= (float)(1 + (Math.random()-0.5)/10);
+				//Candidate temp1 = new Candidate(this.current_ID, this.frameRate, this.map);
+				//		  temp1.setGenome(gen_a); 
+				//this.population.add( temp1 );
+				//this.current_ID++;
 			}
 		}
+		
+		
 	}
 	
 	public void complete() {

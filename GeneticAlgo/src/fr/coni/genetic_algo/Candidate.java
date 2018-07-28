@@ -30,6 +30,7 @@ public class Candidate {
 	private float[] genome = new float[7];
 	public int remaining_life;
 	public boolean best;
+	int steps;
 	
 	Candidate(int ID, float fps, Map map){
 		this.ID = ID;
@@ -57,8 +58,8 @@ public class Candidate {
 		this.v_max = (float)Math.random()*10;
 		this.px = (float)Math.random()*10;
 		this.py = (float)Math.random()*10;
-		this.ix = 0f;//(float)Math.random()*10;
-		this.iy = 0f;//(float)Math.random()*10;
+		this.ix = (float)Math.random()*2;
+		this.iy = (float)Math.random()*2;
 		this.dx = (float)Math.random()*10;
 		this.dy = (float)Math.random()*10;
 		
@@ -133,7 +134,7 @@ public class Candidate {
 		if (this.pos.x + this.h/2 > current_door.x) {
 			if ( (this.pos.y-this.w/2 < current_door.center - current_door.width/2) | (this.pos.y + this.w/2 > current_door.center + current_door.width/2) ) {
 				this.is_active = false;
-				this.fitness = (float)(this.pos.x / this.map.x_max);
+				this.fitness = this.remaining_life/(this.map.nb_doors+1); //(float)(this.pos.x / this.map.x_max);
 				//System.out.println("Candidate is out");
 			} else {
 				this.current_door++;
@@ -141,7 +142,7 @@ public class Candidate {
 				//System.out.println("Congratulation you just passed the door " + this.current_door );
 				if (this.current_door >= this.map.nb_doors) {
 					this.current_door--;
-					this.fitness = 1f;
+					this.fitness = this.remaining_life/(this.map.nb_doors+1); //1f;
 					this.is_active = false;
 				}
 			}
@@ -149,7 +150,7 @@ public class Candidate {
 		
 		if (this.remaining_life < 1) {
 			this.is_active = false;
-			this.fitness = (float)(this.pos.x / this.map.x_max);
+			this.fitness = this.remaining_life/(this.map.nb_doors+1); //(float)(this.pos.x / this.map.x_max);
 			//System.out.println("Candidate is out");
 		}
 	}
@@ -221,7 +222,7 @@ public class Candidate {
 		//this.ia = new IA(this, this.genome);
 		this.ia.sum_error_x = 0;
 		this.ia.sum_error_y = 0;
-		this.ia.prev_error = new PVector(0, 0);
+		this.ia.prev_error_y = 0;
 	}
 	
 }
