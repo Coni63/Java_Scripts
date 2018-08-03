@@ -1,7 +1,6 @@
 package fr.coni.genetic_algo;
 
 import java.util.ArrayList;
-//import processing.core.PApplet;
 import java.util.Random;
 import java.util.Comparator;
 
