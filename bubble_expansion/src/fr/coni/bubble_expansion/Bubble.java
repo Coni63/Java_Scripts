@@ -6,21 +6,31 @@ import java.util.Random;
 
 public class Bubble {
 	
-	static int radius_init = 2;
-	static int radius_ext = 13;
-	static float v_max = 10;
+	static int radius_init;
+	static int radius_ext;
+	static float v_max = 5;
 	private PVector position;
 	private PVector speed;
 	private boolean extended;
 	private PApplet parent;
+	private boolean is_master = false;
+	private int[][] color_bubble =  {{255, 0, 0, 100},
+									 {0, 0, 255, 100},
+									 {0, 255, 0, 100}};
+	private int color_idx;
+	private long timestamp;
+	private int score;
 	
-	Bubble(PApplet parent){
+	Bubble(PApplet parent, int r1, int r2){
+		radius_init = r1;
+		radius_ext = r2;
 		
 		// sketch
 		this.parent = parent;
 		
 		// create a non extended particle (with a speed and small radius) 
 		this.extended = false;
+		this.is_master = false;
 		
 		// set a random position
 		Random random = new Random();
@@ -31,9 +41,11 @@ public class Bubble {
 		int x = random.nextInt(x_max - x_min) + x_min;
 		int y = random.nextInt(y_max - y_min) + y_min;
 		
+		this.color_idx = random.nextInt(color_bubble.length);
+		
 		// set a random speed
-		int vx = random.nextInt(10)-5;
-		int vy = random.nextInt(10)-5;
+		float vx = random.nextFloat()-.5f;
+		float vy = random.nextFloat()-.5f;
 		position = new PVector(x, y);
 		speed = new PVector(vx, vy).normalize().mult(v_max);
 	}
@@ -41,12 +53,41 @@ public class Bubble {
 	public void step() {
 		this.position = PVector.add(this.position, this.speed);
 		HandleBounces();
-		HandleExpansion();
 	}
 	
 	public void draw() {
-		parent.fill(0);
-		parent.ellipse(this.position.x, this.position.y, radius_init, radius_init);		
+		parent.textAlign(PApplet.CENTER, PApplet.CENTER);
+		if (!this.is_master) {
+			parent.stroke(color_bubble[this.color_idx][0], 
+						  color_bubble[this.color_idx][1], 
+						  color_bubble[this.color_idx][2]);
+			parent.fill(parent.color(color_bubble[this.color_idx][0], 
+									 color_bubble[this.color_idx][1], 
+									 color_bubble[this.color_idx][2],
+									 color_bubble[this.color_idx][3])
+					                );
+			if (this.extended) {
+				parent.ellipse(this.position.x, this.position.y, radius_ext*2, radius_ext*2);
+				parent.fill(0);
+				parent.text(this.score, this.position.x, this.position.y);
+			} else {
+				parent.ellipse(this.position.x, this.position.y, radius_init*2, radius_init*2);
+			}
+		} else {
+			parent.stroke(0);
+			parent.fill(255, 255, 255, 100);
+			parent.ellipse(this.position.x, this.position.y, radius_ext*2, radius_ext*2);
+			parent.fill(0);
+			parent.text(this.score, this.position.x, this.position.y);
+		}
+	}
+	
+	public void set_master(int pox_x, int pos_y) {
+		this.is_master = true;
+		position = new PVector(pox_x, pos_y);
+		this.color_idx = 0;
+		setScore(1);
+		setExpanded();
 	}
 	
 	private void HandleBounces() {
@@ -75,8 +116,30 @@ public class Bubble {
 		}
 	}
 	
-	private void HandleExpansion() {
-		
+	public void setExpanded() {
+		speed = new PVector(0, 0);
+		this.extended = true;
+		this.timestamp = System.currentTimeMillis();
+	}
+	
+	public boolean isExpanded() {
+		return this.extended;
+	}
+	
+	public PVector getPosition() {
+		return this.position;
+	}
+	
+	public long getExpandedTime() {
+		return this.timestamp;
+	}
+	
+	public void setScore(int x) {
+		this.score = x;
+	}
+	
+	public int getScore() {
+		return this.score;
 	}
 		
 }
