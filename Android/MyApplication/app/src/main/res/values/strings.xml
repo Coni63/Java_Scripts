@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">MyApplication</string>
+    <string name="reset_sensors">Reset Sensors</string>
+    <string name="accelerometer">Accelerometer</string>
+    <string name="gyroscope">Gyroscope</string>
+    <string name="axis">Axis</string>
+    <string name="x">X</string>
+    <string name="y">Y</string>
+    <string name="z">Z</string>
+    <string name="AccX">0</string>
+    <string name="AccY">0</string>
+    <string name="AccZ">0</string>
+    <string name="GyroX">0</string>
+    <string name="GyroY">0</string>
+    <string name="GyroZ">0</string>
+    <string name="NoBT">No Bluetooth</string>
+    <string name="OkBT">Bluetooth OK</string>
+</resources>
