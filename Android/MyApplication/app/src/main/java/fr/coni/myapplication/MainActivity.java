@@ -41,12 +41,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Log.d(TAG, "onCreate : Initializing Sensor Services");
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
         Log.d(TAG, "onCreate : Register sensors listener");
-        sensorManager.registerListener(MainActivity.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(MainActivity.this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(MainActivity.this, accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_HIGH);
+        sensorManager.registerListener(MainActivity.this, gyroscope, SensorManager.SENSOR_STATUS_ACCURACY_HIGH);
 
         Log.d(TAG, "onCreate : Create Link to TextViews");
         this.AccX = (TextView) findViewById(R.id.AccX);
@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //Log.d(TAG, "onSensorChanged : X: " + sensorEvent.values[0] + " Y: " + sensorEvent.values[1] + " Z: " + sensorEvent.values[2]);
 
         //Log.d(TAG, "onSensorChanged : Display values");
-        if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION){
             this.AccX.setText(String.valueOf(sensorEvent.values[0]));
             this.AccY.setText(String.valueOf(sensorEvent.values[1]));
             this.AccZ.setText(String.valueOf(sensorEvent.values[2]));
