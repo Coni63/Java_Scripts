@@ -2,6 +2,7 @@ package fr.coni.connect4;
 
 import fr.coni.connect4.Grid;
 import fr.coni.connect4.Agent;
+import fr.coni.connect4.Coordinate;
 import processing.core.PApplet;
 
 public class Main extends PApplet{
@@ -25,6 +26,7 @@ public class Main extends PApplet{
 	}
 	
 	public void draw() {
+		background(120);
 		/*
 		if (turn == true && !game_over) {
 			agent.play(board);
@@ -37,7 +39,7 @@ public class Main extends PApplet{
 		*/
 		
 		draw_layout();
-		if (game_over) {
+		if (this.game_over) {
 			draw_result();
 		} else {
 			show_mouse();
@@ -49,11 +51,12 @@ public class Main extends PApplet{
 		char ch = 'r';
 		if (key == ch) {
 			board.reset();
+			this.game_over = false;
 		}
 	}
 	
 	public void mouseClicked() {
-		if (!game_over) {
+		if (!this.game_over) {
 			Boolean valid = false;
 			int col = mouseX/100;
 			valid = board.set_value(col, turn);
