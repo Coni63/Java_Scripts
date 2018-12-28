@@ -9,6 +9,11 @@ public class Coordinate {
 		this.col = col;
 	}
 	
+	Coordinate(Coordinate other){
+		this.row = other.row;
+		this.col = other.col;
+	}
+	
 	@Override
     public boolean equals(Object arg0) {
 

@@ -1,8 +1,8 @@
 package fr.coni.connect4;
 
 import fr.coni.connect4.Grid;
-import fr.coni.connect4.Agent;
-import fr.coni.connect4.Coordinate;
+//import fr.coni.connect4.Agent;
+import fr.coni.connect4.MiniMax;
 import processing.core.PApplet;
 
 public class Main extends PApplet{
@@ -10,8 +10,8 @@ public class Main extends PApplet{
 	private static final float FrameRate = 20f;
 	static Grid board = new Grid();
 	Boolean turn = false;
-	Agent agent = new Agent();
-	Boolean game_over = false;
+	//Agent agent = new Agent();
+	MiniMax agent = new MiniMax();
 
 	public static void main(String[] args) {
 		PApplet.main("fr.coni.connect4.Main");
@@ -27,19 +27,15 @@ public class Main extends PApplet{
 	
 	public void draw() {
 		background(120);
-		/*
-		if (turn == true && !game_over) {
-			agent.play(board);
+		
+		if (turn == true && !board.is_over()) {
+			int score = MiniMax.run(turn, board, 2);
+			//System.out.println(score);
 			turn = !turn;
-			this.game_over = board.is_over()
-			if () {
-				board.reset();
-			}
 		}
-		*/
 		
 		draw_layout();
-		if (this.game_over) {
+		if (board.is_over()) {
 			draw_result();
 		} else {
 			show_mouse();
@@ -51,18 +47,15 @@ public class Main extends PApplet{
 		char ch = 'r';
 		if (key == ch) {
 			board.reset();
-			this.game_over = false;
 		}
 	}
 	
 	public void mouseClicked() {
-		if (!this.game_over) {
-			Boolean valid = false;
+		if (!board.is_over()) {
 			int col = mouseX/100;
-			valid = board.set_value(col, turn);
+			Boolean valid = board.set_value(col, turn);
 			if (valid) {
 				turn = !turn;
-				this.game_over = board.is_over();
 			}		
 		}
 	}

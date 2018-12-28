@@ -2,14 +2,15 @@ package fr.coni.connect4;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.HashSet;
 import java.util.Iterator;
 
 import fr.coni.connect4.Coordinate;
 
-public class Grid {
+public class Grid implements Cloneable{
 	public Boolean[][] grid;
-	private int counter = 0;
+	public int counter = 0;
 	public int[] height = {5, 5, 5, 5, 5, 5, 5};
 	public Boolean winner;
 	public int[][] win_pos = new int[2][2];
@@ -20,8 +21,15 @@ public class Grid {
 		this.grid = new Boolean[6][7];
 	}
 	
-	public void set_grid(Grid other) {
-		this.grid = other.grid;
+	public void copy(Grid other) {
+		this.grid = other.grid.clone();
+		System.out.println(this.grid  + " " + other.grid);
+		this.counter = other.counter;
+		this.height = other.height.clone();
+		this.winner = other.winner;
+		this.win_pos = other.win_pos.clone();
+		this.pos_true = other.pos_true.stream().map(Coordinate::new).collect(Collectors.toSet());
+		this.pos_false = other.pos_false.stream().map(Coordinate::new).collect(Collectors.toSet());
 	}
 	
 	public void set_grid(Boolean val) {
@@ -54,8 +62,6 @@ public class Grid {
 			for (int j=0; j<6; j++) {
 				this.grid[j][i] = null;
 			}
-		}
-		for (int i=0; i<7; i++) {
 			this.height[i] = 5;
 		}
 		this.counter = 0;
@@ -63,7 +69,6 @@ public class Grid {
 		this.winner = null;
 		this.pos_true.clear();
 		this.pos_false.clear();
-		
 	}
 	
 	public Boolean is_over() {
@@ -82,12 +87,12 @@ public class Grid {
 		}
 	}
 		
-	private int longest_sub(boolean team) {
+	public int longest_sub(boolean team) {
 		Iterator<Coordinate> setIterator;
 		Coordinate pawn;
 		Coordinate next_pawn;
 		Set<Coordinate> selected_set;
-		int l = 1;
+		int l = 0;
 		
 		if (team == true) {
 			setIterator = this.pos_true.iterator();
@@ -99,7 +104,7 @@ public class Grid {
 
 		while(setIterator.hasNext()){
 			pawn = setIterator.next();
-			
+			l = Math.max(l, 1);
 			// check H
 			for (int i=1; i<4; i++) {
 				next_pawn = new Coordinate(pawn.row, pawn.col + i);
@@ -173,7 +178,17 @@ public class Grid {
 			}
         }
 		
-		return 0;
+		return l;
 	}
+	
+  	public Object clone() {
+    	Object o = null;
+    	try {
+      		o = super.clone();
+    	} catch(CloneNotSupportedException cnse) {
+      		cnse.printStackTrace(System.err);
+	    }
+	    return o;
+  	}
 	
 }
